@@ -4,13 +4,53 @@ const request = require('supertest');
 const app = require("./app");
 const Cat = require("./models/cat");
 
+describe("basic api endpoint data tests", () => {
+
+  beforeEach(done => {
+    Cat.insertMany([
+      {name: "Skittles", fluffiness: 3},
+      {name: "Garfield", fluffiness: 2},
+      {name: "Princess cat face", fluffiness: 10}
+    ]).then(done());
+  });
+
+  afterEach(done => {
+    Cat.deleteMany({}).then(done());
+  });
+
+  it("cats api endpoint allows creation of cats", (done) => {
+    request(app)
+      .post("/api/cats")
+      .send({name: "Pencylvester", fluffiness: 0})
+      .expect(201)
+      .expect(res => {
+        Cat.count().then(count => {
+          expect(count).to.equal(4);
+        });
+      })
+      .end(done);
+  });
+
+  it("cats api endpoint returns all cats as json", (done) => {
+    request(app)
+      .get("/api/cats")
+      .expect(200)
+      .expect(res => {
+        expect(res.body[0].name).to.equal("Skittles");
+        expect(res.body[1].name).to.equal("Garfield");
+        expect(res.body[2].name).to.equal("Princess cat face");
+        expect(res.body.length).to.equal(3);
+      }).end(done);
+  });
+});
+
 describe("basic model tests", () => {
 
   beforeEach((done) => {
     Cat.deleteMany({}).then(done());
   });
 
-  after((done) => {
+  afterEach((done) => {
     Cat.deleteMany({}).then(done());
   });
 
